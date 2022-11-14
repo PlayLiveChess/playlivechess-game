@@ -1,3 +1,4 @@
+from asyncio import sleep
 from channels.consumer import SyncConsumer, AsyncConsumer, StopConsumer
 
 class MySyncConsumer(SyncConsumer):
@@ -23,6 +24,11 @@ class MyAsyncConsumer(AsyncConsumer):
 
     async def websocket_receive(self, event):
         print('Received! ', event)
+        for i in range(10):
+            await self.send({
+                'type': 'websocket.send',
+                'text': event['text'] + str(count)
+            })
 
     async def websocket_disconnect(self, event):
         print('Disconnected! ', event)
