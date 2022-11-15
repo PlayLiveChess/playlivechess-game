@@ -27,9 +27,16 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# TODO: Isolate these configuration settings, and store into environment variables
+
 # Redis Configuration
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
+
+# Master server configuration
+# (Also referred to as laod balancer)
+MASTER_HOST = "localhost"
+MASTER_PORT = 5000
 
 # Application definition
 

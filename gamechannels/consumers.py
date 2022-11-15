@@ -1,35 +1,22 @@
 from asyncio import sleep
-from channels.consumer import SyncConsumer, AsyncConsumer, StopConsumer
+from channels.generic.websocket import AsyncJsonWebsocketConsumer, StopConsumer
 
-class MySyncConsumer(SyncConsumer):
-    def websocket_connect(self, event):
-        print('Connected! ', event)
-        self.send({
-            'type': 'websocket.accept'
-        })
+class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    def websocket_receive(self, event):
-        print('Received! ', event)
+    async def connect(self):
+        print('Connected!')
+        await self.accept()
 
-    def websocket_disconnect(self, event):
-        print('Disconnected! ', event)
-        raise StopConsumer()
-
-class MyAsyncConsumer(AsyncConsumer):
-    async def websocket_connect(self, event):
-        print('Connected! ', event)
-        await self.send({
-            'type': 'websocket.accept'
-        })
-
-    async def websocket_receive(self, event):
-        print('Received! ', event)
+    async def receive_json(self, content):
+        print('Received! ', content)
         for i in range(10):
-            await self.send({
+            await self.send_json({
                 'type': 'websocket.send',
-                'text': event['text'] + str(count)
+                'text': content
             })
+            await sleep(1)
 
-    async def websocket_disconnect(self, event):
-        print('Disconnected! ', event)
-        raise StopConsumer()
+    async def disconnect(self, close_code):
+        print('Disconnected!')
