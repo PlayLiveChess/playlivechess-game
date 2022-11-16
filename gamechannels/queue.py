@@ -1,6 +1,8 @@
 from threading import Thread, Lock
 from time import sleep
 from collections import deque
+import chess
+from asgiref.sync import async_to_sync
 
 
 """
@@ -83,6 +85,19 @@ class QueueThread(Thread):
 
         self.waiting_buckets[bucket_index].release()
 
+    def dequeue(self, player_channel):
+        bucket_index = player_channel.get_rating() // 100
+
+        # critical section
+        self.waiting_buckets[bucket_index].acquire()
+
+        res = self.waiting_buckets[bucket_index].remove(player_channel)
+
+        self.waiting_buckets[bucket_index].release()
+        # end of critical section
+
+        return res
+
     @staticmethod
     def get_instance():
         if QueueThread.__shared_instance == None:
@@ -94,4 +109,17 @@ class QueueThread(Thread):
         print('Starting QueueThread...')
 
         while(True):
-            sleep(1)
+            for bucket in self.waiting_buckets:
+                if(bucket.length() >= 2):
+                    # critical section
+                    bucket.acquire()
+
+                    p1 = bucket.pop()
+                    p2 = bucket.pop()
+
+                    game = chess.Board()
+
+                    async_to_sync(p1.start_game)(game, 'white', p2.channel_name)
+                    async_to_sync(p2.start_game)(game, 'black', p1.channel_name)
+
+                    bucket.release()
