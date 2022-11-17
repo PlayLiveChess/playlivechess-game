@@ -47,12 +47,13 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
         await self.accept()
 
     async def receive_json(self, content):
+        resp = {
+            'type': 'reply',
+            'success': 'true',
+        }
+
         if content['type'] == 'queue':
             # Enqueue the player
-            resp = {
-                'type': 'reply',
-                'success': 'true',
-            }
             if(self.queued):
                 resp['success'] = 'false'
                 resp['value'] = 'Already Queued!'
@@ -60,26 +61,25 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
                 QueueThread.get_instance().enqueue(self)
                 self.queued = True
 
-            await self.send_json(resp)
-
         elif content['type'] == 'move':
             # The player is trying to play a move
-            resp = {
-                'type': 'reply',
-                'success': 'true',
-            }
 
             valid_move = True
             outcome = None
 
-            turn = 'black'
-            if(self.game.turn):
-                turn = 'white'
+            try:
+                turn = 'black'
+                if(self.get_game().turn):
+                    turn = 'white'
 
-            if(self.color != turn):
+                if(self.color != turn):
+                    valid_move = False
+                    resp['success'] = 'false'
+                    resp['value'] = 'Not your turn!'
+            except:
                 valid_move = False
                 resp['success'] = 'false'
-                resp['value'] = 'Not your turn!'
+                resp['value'] = 'Game has not started yet!'
 
             try:
                 if(valid_move):
@@ -118,10 +118,15 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
                 resp['success'] = 'false'
                 resp['value'] = 'Error while sending to opponnent!'
 
-            await self.send_json(resp)
 
             if(outcome):
                 self.reset_game()
+
+        else:
+            resp['success'] = 'false'
+            resp['value'] = 'Unrecognized command!'
+
+        await self.send_json(resp)
 
     async def opponent_move(self, content):
         await self.send_json(content['text'])
