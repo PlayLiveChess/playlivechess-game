@@ -1,7 +1,6 @@
 from asyncio import sleep
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from gamechannels.queue import QueueThread
-import json
 
 class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
     def __init__(self, *args, **kwargs):
@@ -14,7 +13,6 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
         self.opponent_channel_name = None
         self.game = None
         self.color = None
-        self.turn = None
         self.queued = False
 
     def get_rating(self):
@@ -36,9 +34,6 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
         self.game = game
         self.color = color
         self.opponent_channel_name = opponent_channel_name
-        self.turn = True
-        if color == 'black':
-            self.turn = False
 
         # TODO: Add opponent details here
         await self.send_json({
@@ -77,7 +72,11 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
             valid_move = True
             outcome = None
 
-            if(not self.turn):
+            turn = 'black'
+            if(self.game.turn):
+                turn = 'white'
+
+            if(self.color != turn):
                 valid_move = False
                 resp['success'] = 'false'
                 resp['value'] = 'Not your turn!'
@@ -85,7 +84,6 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
             try:
                 if(valid_move):
                     self.get_game().push_san(content['value'])
-                    self.turn = False
                     # check game endings
                     outcome = self.get_game().outcome(claim_draw = True)
             except:
@@ -127,7 +125,6 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
 
     async def opponent_move(self, content):
         await self.send_json(content['text'])
-        self.turn = True
 
         if('outcome' in content['text'].keys()):
             self.reset_game()
