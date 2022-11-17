@@ -4,7 +4,6 @@ from collections import deque
 import chess
 from asgiref.sync import async_to_sync
 
-
 """
 Bucket represents rating buckets.
 Players are enqueue in different buckets according to their rating.

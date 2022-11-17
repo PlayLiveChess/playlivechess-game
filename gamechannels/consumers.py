@@ -8,6 +8,9 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
         super().__init__(*args, **kwargs)
 
         self.rating = None
+        self.reset_game()
+
+    def reset_game(self):
         self.opponent_channel_name = None
         self.game = None
         self.color = None
@@ -72,6 +75,7 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
             }
 
             valid_move = True
+            outcome = None
 
             if(not self.turn):
                 valid_move = False
@@ -82,31 +86,51 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
                 if(valid_move):
                     self.get_game().push_san(content['value'])
                     self.turn = False
+                    # check game endings
+                    outcome = self.get_game().outcome(claim_draw = True)
             except:
                 valid_move = False
                 resp['success'] = 'false'
                 resp['value'] = 'Invalid move!'
 
+            if(outcome):
+                resp['outcome'] = {
+                    'termination': str(outcome.termination.value),
+                    'result': outcome.result()
+                }
+                if outcome.winner:
+                    resp['outcome']['winnner'] = 'white'
+                elif outcome.winner == False:
+                    resp['outcome']['winnner'] = 'black'
+
             try:
                 if(valid_move):
-                    await self.channel_layer.send(self.get_opponent_channel_name(), {
+                    opponent_move = {
                         'type': 'opponent.move',
-                        'text': content['value']
-                    })
+                        'text': {
+                            'type': 'opponent',
+                            'value': content['value']
+                        }
+                    }
+                    if(outcome):
+                        opponent_move['text']['outcome'] = resp['outcome']
+
+                    await self.channel_layer.send(self.get_opponent_channel_name(), opponent_move)
             except:
                 resp['success'] = 'false'
                 resp['value'] = 'Error while sending to opponnent!'
 
             await self.send_json(resp)
 
+            if(outcome):
+                self.reset_game()
+
     async def opponent_move(self, content):
-        # here content is complete object, and not just the decoded text
-        data = {
-            'type': 'opponent',
-            'value': content['text']
-        }
-        await self.send_json(json.dumps(data))
+        await self.send_json(content['text'])
         self.turn = True
+
+        if('outcome' in content['text'].keys()):
+            self.reset_game()
 
     async def disconnect(self, close_code):
         print('Disconnected!')
