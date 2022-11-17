@@ -3,6 +3,7 @@ from time import sleep
 from collections import deque
 import chess
 from asgiref.sync import async_to_sync
+from gamechannels.health import HealthThread
 
 """
 Bucket represents rating buckets.
@@ -108,6 +109,8 @@ class QueueThread(Thread):
         print('Starting QueueThread...')
 
         while(True):
+            max_bucket_size = 0
+
             for bucket in self.waiting_buckets:
                 if(bucket.length() >= 2):
                     # critical section
@@ -122,3 +125,8 @@ class QueueThread(Thread):
                     async_to_sync(p2.start_game)(game, 'black', p1.channel_name)
 
                     bucket.release()
+                    HealthThread.get_instance().increment_active_games()
+
+                max_bucket_size = max(max_bucket_size, bucket.length())
+
+            HealthThread.get_instance().set_max_players_bucket(max_bucket_size)

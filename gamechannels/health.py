@@ -1,7 +1,7 @@
 from threading import Thread, Lock
 from time import sleep
 import requests
-from gameserver.settings import MASTER_HOST, MASTER_PORT, DEBUG
+from gameserver.settings import MASTER_HOST, MASTER_PORT
 
 """
 HealthThread is responsible for maintaining health parameters of the
@@ -44,9 +44,14 @@ class HealthThread(Thread):
         HealthThread.active_games += 1
         HealthThread.lock.release()
 
+    def decrement_active_games(self):
+        HealthThread.lock.acquire()
+        HealthThread.active_games += 1
+        HealthThread.lock.release()
+
     def set_max_players_bucket(self, max_players_bucket):
         HealthThread.lock.acquire()
-        HealthThread.max_players_bucket += max_players_bucket
+        HealthThread.max_players_bucket = max_players_bucket
         HealthThread.lock.release()
 
     def run(self):
@@ -64,8 +69,7 @@ class HealthThread(Thread):
                 if(not resp.ok):
                     raise Exception('Reponse not ok!')
             except:
-                if(DEBUG):
-                    print('Error while sending health check!')
+                # print('Error while sending health check! {', self.active_games, ', ', self.max_players_bucket, '}')
                 sleep(9)
 
             sleep(1)

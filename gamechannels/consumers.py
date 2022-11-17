@@ -1,6 +1,7 @@
 from asyncio import sleep
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from gamechannels.queue import QueueThread
+from gamechannels.health import HealthThread
 
 class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
     def __init__(self, *args, **kwargs):
@@ -121,6 +122,7 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
 
             if(outcome):
                 self.reset_game()
+                HealthThread.get_instance().decrement_active_games()
 
         else:
             resp['success'] = 'false'
