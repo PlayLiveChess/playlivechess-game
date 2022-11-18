@@ -74,50 +74,41 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
                     turn = 'white'
 
                 if(self.color != turn):
-                    valid_move = False
-                    resp['success'] = 'false'
-                    resp['value'] = 'Not your turn!'
-            except:
-                valid_move = False
-                resp['success'] = 'false'
-                resp['value'] = 'Game has not started yet!'
+                    raise Exception('Not your turn!')
 
-            try:
-                if(valid_move):
+                try:
                     self.get_game().push_san(content['value'])
-                    # check game endings
-                    outcome = self.get_game().outcome(claim_draw = True)
-            except:
-                valid_move = False
-                resp['success'] = 'false'
-                resp['value'] = 'Invalid move!'
+                except:
+                    raise Exception('Invalid move!')
 
-            if(outcome):
-                resp['outcome'] = {
-                    'termination': str(outcome.termination.value),
-                    'result': outcome.result()
-                }
-                if outcome.winner:
-                    resp['outcome']['winnner'] = 'white'
-                elif outcome.winner == False:
-                    resp['outcome']['winnner'] = 'black'
+                # check game endings
+                outcome = self.get_game().outcome(claim_draw = True)
 
-            try:
-                if(valid_move):
-                    opponent_move = {
-                        'type': 'opponent.move',
-                        'text': {
-                            'type': 'opponent',
-                            'value': content['value']
-                        }
+                opponent_move = {
+                    'type': 'opponent.move',
+                    'text': {
+                        'type': 'opponent',
+                        'value': content['value']
                     }
-                    if(outcome):
-                        opponent_move['text']['outcome'] = resp['outcome']
+                }
 
-                    await self.channel_layer.send(self.get_opponent_channel_name(), opponent_move)
-            except:
+                if(outcome):
+                    resp['outcome'] = {
+                        'termination': str(outcome.termination.value),
+                        'result': outcome.result()
+                    }
+                    if outcome.winner:
+                        resp['outcome']['winnner'] = 'white'
+                    elif outcome.winner == False:
+                        resp['outcome']['winnner'] = 'black'
+
+                    opponent_move['text']['outcome'] = resp['outcome']
+
+                await self.channel_layer.send(self.get_opponent_channel_name(), opponent_move)
+
+            except Exception as e:
                 resp['success'] = 'false'
-                resp['value'] = 'Error while sending to opponnent!'
+                resp['value'] = str(e)
 
 
             if(outcome):
