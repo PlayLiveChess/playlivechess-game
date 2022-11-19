@@ -24,25 +24,12 @@ Activating virtual environment:
 source venv/bin/activate
 ```
 
-### Installing redis
+### Installing redis (Optional)
 
-This project uses redis for working with channel layers. You have two options, either install redis on your system, or switch to in memory channel layers.
-
-#### Option 1: Installing Redis
+If you are using redis for working with channel layers, you have to install redis on your system, or switch to in memory channel layers.
 
 ```shell
 sudo apt install redis
-```
-
-#### Option 2: Switching to In-Memory Channel Layer
-
-Go to `gameserver/settings.py` and replace the value of `CHANNEL_LAYERS` with the following:
-```python
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-    }
-}
 ```
 
 ### Installing dependencies
