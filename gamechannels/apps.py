@@ -11,5 +11,5 @@ class GamechannelsConfig(AppConfig):
     def ready(self):
         # Starting Queue manager thread
         if os.environ.get('RUN_MAIN') == 'true':
-            QueueThread().start()
-            HealthThread().start()
+            QueueThread.get_instance().start()
+            HealthThread.get_instance().start()
