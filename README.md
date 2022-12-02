@@ -156,3 +156,15 @@ To be added
 ### Game termination
 
 Once the game is terminated, the players can start a new game by sending a `queue` request again to the server.
+
+
+## Health Checks
+
+Send `HTTP` `GET` request at `/health` to receive health checks in this format:
+
+```json
+{
+    "available_capacity": 1000,
+    "ready_to_close": true
+}
+```
