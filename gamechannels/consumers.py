@@ -8,6 +8,7 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
         super().__init__(*args, **kwargs)
 
         self.rating = None
+        self.name = None
         self.reset_game()
 
     def reset_game(self):
@@ -20,6 +21,11 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
         if(self.rating):
             return self.rating
         return 1000
+    
+    def get_name(self):
+        if(self.name):
+            return self.name
+        return 'Player'
 
     def get_opponent_channel_name(self):
         if(not self.opponent_channel_name):
@@ -31,7 +37,7 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
             raise Exception('Game has not started yet!')
         return self.game
 
-    async def start_game(self, game, color, opponent_channel_name):
+    async def start_game(self, game, color, opponent_channel_name, playerDetails):
         self.game = game
         self.color = color
         self.opponent_channel_name = opponent_channel_name
@@ -39,7 +45,8 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
         # TODO: Add opponent details here
         await self.send_json({
             'type': 'start',
-            'color': color
+            'color': color,
+            'opponentDetails': playerDetails
         })
 
 
@@ -59,6 +66,12 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
                 resp['success'] = 'false'
                 resp['value'] = 'Already Queued!'
             else:
+                if 'playerDetails' in content.keys():
+                    if 'name' in content['playerDetails'].keys():
+                        self.name = content['playerDetails']['name']
+                    if 'rating' in content['playerDetails'].keys():
+                        self.rating = content['playerDetails']['rating']
+
                 QueueThread.get_instance().enqueue(self)
                 self.queued = True
 

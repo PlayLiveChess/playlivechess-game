@@ -16,7 +16,13 @@ The server uses `json` formatting for communcation. Thus, all further communicat
 Now, to enter the waiting queue and get paired against an opponent of similar strength, send a queuing message:
 ```json
 {
-    "type": "queue"
+    "type": "queue",
+    
+    // OPTIONAL: Given values are default
+    "playerDetails": {
+        "name": "Player",
+        "rating": 1000
+    }
 }
 ```
 
@@ -48,7 +54,11 @@ Response after successful pairing:
 ```json
 {
     "type": "start",
-    "color": "white"
+    "color": "white",
+    "opponentDetails": {
+        "name": "Player",
+        "rating": 1000
+    }
 }
 ```
 

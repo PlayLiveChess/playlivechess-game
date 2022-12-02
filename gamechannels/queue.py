@@ -110,8 +110,10 @@ class QueueThread(Thread):
 
         while(True):
             max_bucket_size = 0
+            sleep_flag = True
 
             for bucket in self.waiting_buckets:
+                
                 if(bucket.length() >= 2):
                     # critical section
                     bucket.acquire()
@@ -121,12 +123,19 @@ class QueueThread(Thread):
 
                     game = chess.Board()
 
-                    async_to_sync(p1.start_game)(game, 'white', p2.channel_name)
-                    async_to_sync(p2.start_game)(game, 'black', p1.channel_name)
+                    async_to_sync(p1.start_game)(game, 'white', p2.channel_name,
+                        {'name': p2.get_name(), 'rating': p2.get_rating()})
+                    async_to_sync(p2.start_game)(game, 'black', p1.channel_name,
+                        {'name': p1.get_name(), 'rating': p1.get_rating()})
 
                     bucket.release()
                     HealthThread.get_instance().increment_active_games()
+                    sleep_flag = False
 
                 max_bucket_size = max(max_bucket_size, bucket.length())
 
             HealthThread.get_instance().set_max_players_bucket(max_bucket_size)
+
+            # if no job, sleep for 1s
+            if(sleep_flag):
+                sleep(1)
