@@ -1,7 +1,7 @@
 from asyncio import sleep
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from gamechannels.queue import QueueThread
-from gamechannels.health import HealthThread
+from health.health import Health
 
 class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
     def __init__(self, *args, **kwargs):
@@ -53,6 +53,7 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         print('Connected!')
         await self.accept()
+        Health.get_instance().increment_active_connections()
 
     async def receive_json(self, content):
         resp = {
@@ -126,7 +127,7 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
 
             if(outcome):
                 self.reset_game()
-                HealthThread.get_instance().decrement_active_games()
+                Health.get_instance().decrement_active_games()
 
         else:
             resp['success'] = 'false'
@@ -151,5 +152,9 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
                 'type': 'disconnect'
             }
         }
-        await self.channel_layer.send(self.get_opponent_channel_name(), disconnect_message)
+        if(self.opponent_channel_name):
+            await self.channel_layer.send(self.get_opponent_channel_name(), disconnect_message)
+            Health.get_instance().decrement_active_games()
+
+        Health.get_instance().decrement_active_connections()
         print('Disconnected!')

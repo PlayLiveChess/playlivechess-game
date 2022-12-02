@@ -3,7 +3,7 @@ from time import sleep
 from collections import deque
 import chess
 from asgiref.sync import async_to_sync
-from gamechannels.health import HealthThread
+from health.health import Health
 
 """
 Bucket represents rating buckets.
@@ -129,12 +129,12 @@ class QueueThread(Thread):
                         {'name': p1.get_name(), 'rating': p1.get_rating()})
 
                     bucket.release()
-                    HealthThread.get_instance().increment_active_games()
+                    Health.get_instance().increment_active_games()
                     sleep_flag = False
 
                 max_bucket_size = max(max_bucket_size, bucket.length())
 
-            HealthThread.get_instance().set_max_players_bucket(max_bucket_size)
+            Health.get_instance().set_max_players_bucket(max_bucket_size)
 
             # if no job, sleep for 1s
             if(sleep_flag):

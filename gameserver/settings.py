@@ -33,11 +33,6 @@ ALLOWED_HOSTS = ['*']
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
 
-# Master server configuration
-# (Also referred to as laod balancer)
-MASTER_HOST = "localhost"
-MASTER_PORT = 5000
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -49,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'gamechannels',
+    'health',
 ]
 
 MIDDLEWARE = [
