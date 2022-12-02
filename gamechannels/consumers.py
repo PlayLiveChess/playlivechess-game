@@ -139,6 +139,17 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
 
         if('outcome' in content['text'].keys()):
             self.reset_game()
+    
+    async def opponent_disconnect(self, content):
+        await self.send_json(content['text'])
+        self.reset_game()
 
     async def disconnect(self, close_code):
+        disconnect_message = {
+            'type': 'opponent.disconnect',
+            'text': {
+                'type': 'disconnect'
+            }
+        }
+        await self.channel_layer.send(self.get_opponent_channel_name(), disconnect_message)
         print('Disconnected!')
