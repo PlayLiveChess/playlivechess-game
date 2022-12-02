@@ -31,7 +31,10 @@ class Bucket():
         return self.player_channels.__len__()
 
     def remove(self, player_channel):
-        self.player_channels.remove(player_channel)
+        try:
+            return self.player_channels.remove(player_channel)
+        except:
+            pass
 
     def acquire(self):
         self.lock.acquire()

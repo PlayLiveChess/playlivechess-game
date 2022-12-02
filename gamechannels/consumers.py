@@ -67,11 +67,11 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
                 resp['success'] = 'false'
                 resp['value'] = 'Already Queued!'
             else:
-                if 'playerDetails' in content.keys():
-                    if 'name' in content['playerDetails'].keys():
-                        self.name = content['playerDetails']['name']
-                    if 'rating' in content['playerDetails'].keys():
-                        self.rating = content['playerDetails']['rating']
+                try:
+                    self.name = content['playerDetails']['name']
+                    self.rating = int(content['playerDetails']['rating'])
+                except:
+                    pass
 
                 QueueThread.get_instance().enqueue(self)
                 self.queued = True
@@ -155,6 +155,9 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
         if(self.opponent_channel_name):
             await self.channel_layer.send(self.get_opponent_channel_name(), disconnect_message)
             Health.get_instance().decrement_active_games()
+
+        if(self.queued):
+            QueueThread.get_instance().dequeue(self)
 
         Health.get_instance().decrement_active_connections()
         print('Disconnected!')
