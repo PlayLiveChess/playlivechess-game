@@ -168,3 +168,15 @@ Send `HTTP` `GET` request at `/health` to receive health checks in this format:
     "ready_to_close": true
 }
 ```
+
+## Environment variables
+
+Place `.env` file in root directory.
+
+```shell
+# Optional
+DEBUG=True
+SECRET_KEY=h^z13$qr_s_wd65@gnj7a=xs7t05$w7q8!x_8zsld#
+# Optional
+LIMIT=1000
+```

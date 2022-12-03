@@ -2,6 +2,7 @@ from asyncio import sleep
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from gamechannels.queue import QueueThread
 from health.health import Health
+from gameserver.settings import LIMIT
 
 class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
     def __init__(self, *args, **kwargs):
@@ -51,9 +52,12 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
 
 
     async def connect(self):
-        print('Connected!')
-        await self.accept()
-        Health.get_instance().increment_active_connections()
+        if(Health.get_instance().active_connections < LIMIT):
+            print('Connected!')
+            await self.accept()
+            Health.get_instance().increment_active_connections()
+        else:
+            print('Limit Reached! Connection Rejected')
 
     async def receive_json(self, content):
         resp = {
