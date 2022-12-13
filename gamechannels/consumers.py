@@ -52,10 +52,10 @@ class AsyncPlayerConsumer(AsyncJsonWebsocketConsumer):
 
 
     async def connect(self):
+        Health.get_instance().increment_active_connections()
         if(Health.get_instance().active_connections < LIMIT):
             print('Connected!')
             await self.accept()
-            Health.get_instance().increment_active_connections()
         else:
             print('Limit Reached! Connection Rejected')
 
